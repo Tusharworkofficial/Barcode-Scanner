@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Barcode</title>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.0/dist/JsBarcode.all.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <nav>
+            <input type="checkbox" id="sidebar-active">
+            <label for="sidebar-active" class="open-sidebar-button">
+                <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32">
+                    <path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z" />
+                </svg>
+            </label>
+            <label id="overlay" for="sidebar-active"></label>
+            <div class="links-container">
+                <label for="sidebar-active" class="close-sidebar-button">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="32" viewBox="0 -960 960 960" width="32">
+                        <path
+                            d="m256-200-56-56 224-224-224-224 56-56 224 224 224-224 56 56-224 224 224 224-56 56-224-224-224 224Z" />
+                    </svg>
+                </label>
+                <a class="home-link" href="index.html">Generate barcode</a>
+                <a href="scan.html">Scan Barcode</a>
+                <a href="database.html">DataBase</a>
+                <a href="Tag.html">Tags</a>
+            </div>
+        </nav>
+    </header>
+
+    <main>
+        <div class="form-container">
+            <h2>Generate Barcode</h2>
+            <form id="barcode-form">
+                <input type="text" id="material-id" placeholder="Material ID" required>
+                <input type="text" id="material-name" placeholder="Material Name" required>
+                <input type="number" id="quantity" placeholder="Quantity" required>
+                <input type="text" id="unit" placeholder="Unit of Measurement (e.g., kg, liters)" required>
+                <input type="text" id="category" placeholder="Category (e.g., Raw Material, Finished Product)" required>
+                <input type="text" id="supplier-details" placeholder="Supplier Details" required>
+                <input type="date" id="expiry-date" placeholder="Material Expiry Date" required>
+                <input type="text" id="batch-lot" placeholder="Batch or Lot No." required>
+                <input type="number" id="cost-per-unit" placeholder="Cost per Unit" required>
+                <input type="text" id="tag-name" placeholder="Tag Name" required>
+                <button type="submit">Generate Barcode</button>
+            </form>
+            <div class="barcode-display" id="barcode-display"></div>
+            <svg id="barcode"></svg>
+            <div class="print-button-container">
+                <button class="print-button" id="print-barcode-button">Print Barcode</button>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2024 Barcode Manager</p>
+    </footer>
+
+
+
+    <!-- this is the javascript code-->
+
+    <script>
+        const barcodeForm = document.getElementById('barcode-form');
+        const barcodeDisplay = document.getElementById('barcode-display');
+        const barcodeElement = document.getElementById('barcode');
+
+        // Initialize database in localStorage
+        const initializeDatabase = () => {
+            if (!localStorage.getItem('barcodeDatabase')) {
+                localStorage.setItem('barcodeDatabase', JSON.stringify([]));
+            }
+        };
+
+        // Save generated data to the database
+        const saveToDatabase = (data) => {
+            const database = JSON.parse(localStorage.getItem('barcodeDatabase'));
+            database.push({ ...data, timestamp: new Date().toISOString() });
+            localStorage.setItem('barcodeDatabase', JSON.stringify(database));
+        };
+
+        // Generate barcode and save to database
+        barcodeForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const Barcode = document.getElementById('barcode').value
+            const materialId = document.getElementById('material-id').value;
+            const materialName = document.getElementById('material-name').value;
+            const quantity = document.getElementById('quantity').value;
+            const unit = document.getElementById('unit').value;
+            const expiryDate = document.getElementById('expiry-date').value;
+            const supplierDetails = document.getElementById('supplier-details').value;
+            const category = document.getElementById('category').value;
+            const batch = document.getElementById('batch-lot').value;
+            const costPerUnit = document.getElementById('cost-per-unit').value;
+            const tagName = document.getElementById('tag-name').value;
+
+            const barcode = `ID-${materialId}-${Date.now()}`;
+
+            // Generate barcode using JsBarcode
+            JsBarcode("#barcode", barcode, {
+                format: "CODE128",
+                width: 2,
+                height: 40,
+                displayValue: true
+            });
+
+            saveToDatabase({ barcode, materialId, materialName, quantity, unit, expiryDate, supplierDetails, category, batch, costPerUnit,tagName });
+
+            barcodeDisplay.innerHTML = `
+                <p><strong>Barcode:</strong> ${barcode}</p>
+                <p><strong>Material ID:</strong> ${materialId}</p>
+                <p><strong>Material Name:</strong> ${materialName}</p>
+                <p><strong>Quantity:</strong> ${quantity}</p>
+                <p><strong>unit:</strong> ${unit}</p>
+                <p><strong>Expiry Date :</strong> ${expiryDate}</p>
+                <p><strong>Supplier Details:</strong> ${supplierDetails}</p>
+                <p><strong>Category:</strong> ${category}</p>
+                <p><strong>Batch :</strong> ${batch}</p>
+                <p><strong>Cost Per Unit:</strong> ${costPerUnit}</p>
+                <p><strong>Tag Name:</strong> ${tagName}</p>
+
+            `;
+
+            barcodeForm.reset();
+        });
+
+        initializeDatabase();
+
+        document.getElementById('print-barcode-button').addEventListener('click', function () {
+            const barcodeElement = document.getElementById('barcode');
+            const printWindow = window.open('', '', 'width=1000,height=600');
+            printWindow.document.write('<html><head><title>Print Barcode</title></head><body>');
+            printWindow.document.write(barcodeElement.outerHTML); // Print the barcode SVG
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.print();
+        });
+
+    </script>
+
+    <!-- Javascript Ends -->
+</body>
+
+</html>
